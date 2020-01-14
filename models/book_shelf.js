@@ -2,22 +2,22 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../utils/database');
 
-// 모델 이름과 모델 형식 지정
-const Post = sequelize.define('post', {
+const BookShelf = sequelize.define('bookShelf', {
   id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
     allowNull: false,
     primaryKey: true
   },
-  title: Sequelize.STRING,
-  text: {
+  name: {
     type: Sequelize.STRING,
   },
-  imageUrl: {
+  description: {
     type: Sequelize.STRING,
   },
-})
+  bookCount: {
+    type: Sequelize.INTEGER
+  }
+});
 
-module.exports = Post;
-
+module.exports = BookShelf;

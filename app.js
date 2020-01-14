@@ -1,16 +1,54 @@
+// 외부 패키지 IMPORT
+const path = require('path');
 const express = require('express');
 const bodysParser = require('body-parser');
+
+// 라우터 객체 IMPORT
+const adminRoutes = require('./routes/admin');
+const clientRoutes = require('./routes/client');
+
+// 데이터베이스 객체 IMPORT
+const sequelize = require('./utils/database');
+
+// 데이터베이스 모델 객체 IMPORT
+const Post = require('./models/post');
+const User = require('./models/user');
+const Book = require('./models/book');
+const BookShelf = require('./models/book_shelf');
+const BookShelfHasBook = require('./models/bridge_model/book_shelf_has_book');
+const Library = require('./models/library');
+
+
+// Express 객체 생성
 const app = express();
 
-const feedRoutes = require('./routes/feed');
-const sequelize = require('./utils/databse');
 
-app.use(bodysParser.json()); // x-www-form-urlendcoded <form> <- 이건 필요없다. 그러니 josn 데이터로 받을 수 있도록 한다.
+// [ 미들웨어 등록 - 요청이 들어올 때마다 실행된다. 단순히 서버가 시작되는 것으로는 실행되지 않는다. ]
 
-// 미들웨어 추가
+// body 필드로 받게 되는 데이터가 JSON 형식으로 가지도록 한다
+app.use(bodysParser.json()); 
+
+// 정적 파일의 경로를 프로젝트 경로의 public 폴더로 설정한다
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 유저가 아예 한명도 없는지 검사한다.
 app.use((req, res, next) => {
-  // 응답이 가기전에 헤더를 추가
-  // 특정 도메인에만 허용을 해줄 수도, 그냥 다 열어버릴 수도 있다.
+  User.findByPk(1)
+    .then(user => {
+      // req 객체에 user 라는 속성을 만들어서 일단 더미 유저 정보를 넣어놓는다. 이때 집어넣는 객체는 단순한 객체가 아니라 sequelize 객체이다.
+      req.user = user;
+      next();
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  ;
+});
+
+
+// CORS 제어 미들웨어 추가
+app.use((req, res, next) => {
+  // 응답이 가기전에 헤더를 추가한다. 특정 도메인에만 허용을 해줄 수도, 그냥 다 열어버릴 수도 있다.
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   // 오리진만 열어주면 안되고, 어떤 HTTP 메서드가 허용되는지도 정해줘야 한다.
@@ -22,19 +60,79 @@ app.use((req, res, next) => {
   next();
 });
 
-// post 로 시작하는 모든 라우팅은 feedRoutes로 전달되어 핸들링 된다
-app.use('/feed', feedRoutes);
+// 라우터 등록
+app.use('/admin', adminRoutes);
+app.use(clientRoutes)
 
-// 데이터베이스 연결
-sequelize.sync();
 
-// db.connect((err) => {
-//   if (err) {
-//     throw err;
-//   }
-//   console.log('MySQL is connected');
+// 모델 간의 관계 맺기 <- 이거 다른데에 옮겨야겠는데
+
+
+// USER -< POST
+User.hasMany(Post);
+Post.belongsTo(User, {
+  constraints: true,
+  onDelete: 'CASCADE' // 유저가 지워지면, 포스트들도 지워진다.
+});
+
+// USER - LIBRARY
+User.hasOne(Library);
+Library.belongsTo(User, {
+  constraints: true,
+  onDelete: 'CASCADE'
+});
+
+// LIBRARY -< BOOKSHELF
+
+Library.hasMany(BookShelf, {
+  constraints: true,
+  onDelete: 'CASCADE'
+})
+
+BookShelf.belongsTo(Library);
+
+// BOOKHELF -< BOOKSHELFHASBOOK -> BOOK
+
+BookShelf.belongsToMany(Book, {
+  through: BookShelfHasBook
+});
+Book.belongsToMany(BookShelf, {
+  through: BookShelfHasBook
+});
+
+
+
+// TIPS
+
+// User.hasMany(Post, {
+  // force: true // 덮어씌우기를 강제함
 // });
 
-app.listen(8080, () => {
-  console.log('server is now on http://localhost:8080');
-})
+
+
+
+// 데이터베이스 연결
+sequelize
+  .sync({
+    // force: true // 그냥 다 덮어씌워버리도록 함.
+  })
+  .then(result => {
+    return User.findByPk(1);
+  })
+  .then(user => {
+    if (!user) {
+      // user 객체는 자기 자신에게 데이터를 넣는 기능은 없다.
+      return User.create({
+        firstName: "songwon",
+        lastName: "Lee",
+        email: "swon3210@gmail.com"
+      });
+    }
+    app.listen(8080, () => {
+      console.log('server is now on http://localhost:8080');
+    })
+    // 연결이 되었다면 서버 개방
+  })
+  .catch(err => {
+    console.log(err)
+  });

@@ -2,22 +2,23 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../utils/database');
 
-// 모델 이름과 모델 형식 지정
-const Post = sequelize.define('post', {
+const User = sequelize.define('user', {
   id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
     allowNull: false,
     primaryKey: true
   },
-  title: Sequelize.STRING,
-  text: {
+  firstName: {
     type: Sequelize.STRING,
   },
-  imageUrl: {
+  lastName: {
     type: Sequelize.STRING,
   },
-})
+  email: {
+    type: Sequelize.STRING,
+    unique: true
+  }
+});
 
-module.exports = Post;
-
+module.exports = User;
