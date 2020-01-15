@@ -1,7 +1,7 @@
 const BookShelf = require('../models/book_shelf');
 const Library = require('../models/library');
 
-exports.getBookShelves = (req, res, next) => {
+exports.getBookShelves = (req, res) => {
   const libraryIdx = req.params.libraryIdx;
 
   BookShelf.findAll({ where: { libraryId: libraryIdx }})
@@ -14,7 +14,8 @@ exports.getBookShelves = (req, res, next) => {
 };
 
 // 모든 사람의 책장을 가져오는 것도 그냥 이걸로 대체할 수 있음
-exports.searchBookShelves = (req, res, next) => {
+exports.searchBookShelves = (req, res) => {
+  
   const findingName = req.query.name;
 
   BookShelf.findAll({where: { name: findingName } })
@@ -47,7 +48,7 @@ exports.createBookShelf = (req, res) => {
 
 }
 
-exports.updateBookShelf = (req, res, next) => {
+exports.updateBookShelf = (req, res) => {
   const idx = req.body.idx;
   const updatingName = req.body.name;
   const updatingDescription = req.body.description;
@@ -67,7 +68,7 @@ exports.updateBookShelf = (req, res, next) => {
 
 }
 
-exports.deleteBookShelf = (req, res, next) => {
+exports.deleteBookShelf = (req, res) => {
   const deletingIdx = req.params.idx;
   return BookShelf.findByPk(deletingIdx)
     .then(bookShelf => {

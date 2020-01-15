@@ -37,7 +37,7 @@ router.put('/library/:idx', libraryController.updateLibrary
 router.get('/bookShelves/:libraryIdx', bookShelfController.getBookShelves);
 
 // 전체 책장들 중에서 검색 조건을 만족하는 책장을 불러옵니다
-router.get('/bookShelves/search?name=name',bookShelfController.searchBookShelves);
+router.get('/bookShelves/search/options',bookShelfController.searchBookShelves);
 
 // 사용자의 도서관에 새로운 책장을 저장합니다
 router.post('/bookShelf/create', bookShelfController.createBookShelf);
@@ -48,19 +48,24 @@ router.put('/bookShelf/update', bookShelfController.updateBookShelf);
 // 사용자의 도서관에 있는 특정한 책장을 지웁니다.
 router.delete('/bookShelf/delete/:idx', bookShelfController.deleteBookShelf);
 
+
+
 // ------------- BOOK
 
 // 사용자의 도서관의 특정 책장에서 모든 책들을 불러옵니다
 router.get('/books/:bookShelfIdx', bookController.getBooks);
 
 // 외부의 책들 중 조건을 만족하는 책을 검색합니다
-router.get('/books/find', bookController.findBooks);
+router.get('/books/search/options', bookController.searchBooks);
 
 // 책을 새로 사용자의 도서관의 책장에 저장합니다
 router.post('/book/add', bookController.addBook);
 
+// 사용자의 도서관의 책장에서 특정 책을 업데이트 합니다
+router.put('/book/update', bookController.updateBook);
 
-
+// 사용자의 도서관의 책장에서 특정 책을 삭제합니다
+router.delete('/book/delete', bookController.deleteBook);
 
 
 

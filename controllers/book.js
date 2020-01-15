@@ -1,9 +1,13 @@
 const Book = require('../models/book');
 const BookShelf = require('../models/book_shelf');
 
+
 // 네이버 검색 API
 const clientId = 'o4HY4geY37qR_mJopk_o';
 const clientSecret = '3zmjXCI44f';
+
+// 카카오 검색 API
+const kakaoAPIKey = 'c2b1e561719d5ebaa23081c3e8e48fee';
 
 // 패키지 IMPORT
 const rp = require('request-promise');
@@ -11,40 +15,78 @@ const rp = require('request-promise');
 
 exports.getBooks = (req, res) => {
   
+  const bookShelfIdx = req.params.bookShelfIdx;
+
+  BookShelf.findAll({
+    where: {
+      id: bookShelfIdx
+    },
+    include: [{
+      model: Book,
+      through: {
+        attributes: ['title', 'description'],
+      },
+      
+    }]
+  })
+    .then(books => {
+      res.status(200).send(books);
+    })
+    .catch(err => {
+      console.log(err);
+    })
 }
 
-exports.findBooks = (req, res) => {
+exports.searchBooks = (req, res) => {
 
-  console.log('엥 뭐징ㅇㅇ', req.query);
+  // ----- 카카오 책 검색
 
-  const findingQuery = req.query.query;
+  const query = req.query.query;
 
-  const api_url = 'https://openapi.naver.com/v1/search/book.json?query=' + encodeURI(findingQuery); // json 결과
+  const api_url = `https://dapi.kakao.com/v3/search/book?query=${encodeURI(query)}`
 
   const options = {
     uri: api_url,
     headers: {
-      'X-Naver-Client-Id': clientId, 
-      'X-Naver-Client-Secret': clientSecret
+      'Authorization': `KakaoAK ${kakaoAPIKey}`
     }
-  };
+  }
 
   rp(options)
-    .then((error, response, body) => {
-      console.log(error, response, body);
-      if (!error && response.statusCode == 200) {
-        res.writeHead(200, {
-          'Content-Type': 'text/json;charset=utf-8'
-        });
-        res.send(body);
-      } else {
-        console.log('error = ' + response.statusCode);
-        res.status(response.statusCode).end();
-      }
+    .then(body => {
+      res.status(200).send(body);
     })
     .catch(err => {
       console.log(err);
-    });
+      res.status(500).end()
+    })
+
+
+
+  // ----- 네이버 책 검색
+
+  // const query = req.query.query;
+  // const display = req.query.display;
+  // const start = req.query.start;
+
+  // const api_url = `https://openapi.naver.com/v1/search/book.json?query=${encodeURI(query)}&display=${display}&start=${start}`;
+
+  // const options = {
+  //   uri: api_url,
+  //   headers: {
+  //     'X-Naver-Client-Id': clientId, 
+  //     'X-Naver-Client-Secret': clientSecret
+  //   }
+  // };
+
+  // rp(options)
+  //   .then(body => {
+  //     res.status(200).send(body);
+  //   })
+  //   .catch(err => {
+  //     console.log(err);
+  //     res.status(406).end();
+  //   });
 }
 
 
@@ -68,25 +110,49 @@ exports.addBook = (req, res) => {
       return bookShelf.addBook(fetchedBook);
     })
     .then(result => {
-      res.status(201).send(result)
+      res.status(200).send(result)
+    })
+    .catch(err => {
+      res.status(500).end();
+      console.log(err);
+    });
+
+}
+
+exports.updateBook = (req, res) => {
+
+  const idx = req.body.idx;
+  const updatingTitle = req.body.title;
+  const updatingDescription = req.body.description;
+
+  Book.findByPk(idx)
+    .then(book => {
+      book.title = updatingTitle;
+      book.description = updatingDescription;
+      book.save()
+    })
+    .then(result => {
+      res.status(200).send(result);
     })
     .catch(err => {
       console.log(err);
-    });
-  
-  
-  // .findByPk(bookShelfIdx)
-  //   .then(bookShelf => {
-  //     return bookShelf.createBook({
-  //       title: addingTitle,
-  //       description: addingDescription
-  //     });
-  //   })
-  //   .then(result => {
-  //     return res.send(result);
-  //   })
-  //   .catch(err => {
-  //     console.log(err);
-  //   })
+      res.status(500).end()
+    })
+}
 
+exports.deleteBook = (req, res) => {
+
+  const idx = req.params.idx;
+
+  Book.findByPk(idx)
+    .then(book => {
+      return book.destory();
+    })
+    .then(result => {
+      res.status(200).send(result);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).end();
+    })
 }
