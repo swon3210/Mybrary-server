@@ -31,7 +31,7 @@ exports.getLibrary = (req, res) => {
 };
 
 exports.updateLibrary = (req, res) => {
-  const libraryIdx = req.params.idx;
+  const libraryIdx = req.body.idx;
   const updatingName = req.body.name;
   const updatingDescription = req.body.description;
 
@@ -42,9 +42,10 @@ exports.updateLibrary = (req, res) => {
       return library.save()
     })
     .then(result => {
-      res.send('update complete');
+      res.status(200).send(result);
     })
     .catch(err => {
       console.log(err);
+      res.status(500).end();
     })
 }

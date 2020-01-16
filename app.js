@@ -11,19 +11,23 @@ const clientRoutes = require('./routes/client');
 const sequelize = require('./utils/database');
 
 // 데이터베이스 모델 객체 IMPORT
-const Post = require('./models/post');
 const User = require('./models/user');
 const Book = require('./models/book');
 const BookShelf = require('./models/book_shelf');
 const BookShelfHasBook = require('./models/bridge_model/book_shelf_has_book');
 const Library = require('./models/library');
+const Post = require('./models/post');
 
+// 스웨거(API 명세 문서) 갹채 IMPORT
+const swaggerDoc = require('swagger-jsdoc');
+const swaggerUI = require('swagger-ui-express');
+const swaggerDocument = require('./api_docs/swagger.json');
 
 // Express 객체 생성
 const app = express();
 
 
-// [ 미들웨어 등록 - 요청이 들어올 때마다 실행된다. 단순히 서버가 시작되는 것으로는 실행되지 않는다. ]
+// [ 미들웨어 등록 - 요청이 들어올 때마다 실행된다. 단순히 서버가 시작되는 것으로는 실행되지 않는다 ]
 
 // body 필드로 받게 되는 데이터가 JSON 형식으로 가지도록 한다
 app.use(bodysParser.json()); 
@@ -60,9 +64,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// 스웨거(API 명세서) 설정
+const swaggerOptions = {
+  swaggerDefinition: {
+    ...swaggerDocument
+  },
+  apis: ["routes/*.js"]
+}
+
+const swaggerDocs = swaggerDoc(swaggerOptions);
+
 // 라우터 등록
 app.use('/admin', adminRoutes);
 app.use(clientRoutes)
+app.use('/apis', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 
 // 모델 간의 관계 맺기 <- 이거 다른데에 옮겨야겠는데
@@ -88,7 +103,6 @@ Library.hasMany(BookShelf, {
   constraints: true,
   onDelete: 'CASCADE'
 })
-
 BookShelf.belongsTo(Library);
 
 // BOOKHELF -< BOOKSHELFHASBOOK -> BOOK
@@ -100,14 +114,15 @@ Book.belongsToMany(BookShelf, {
   through: BookShelfHasBook
 });
 
-
-
-// TIPS
-
-// User.hasMany(Post, {
-  // force: true // 덮어씌우기를 강제함
-// });
-
+// BOOK - Post
+Book.hasMany(Post, {
+  force: true
+});
+Post.belongsTo(Book, {
+  force: true,
+  constraints: true,
+  onDelete: 'CASCADE'
+});
 
 
 
@@ -128,10 +143,11 @@ sequelize
         email: "swon3210@gmail.com"
       });
     }
+    
+    // 연결이 되었다면 서버 개방
     app.listen(8080, () => {
       console.log('server is now on http://localhost:8080');
     })
-    // 연결이 되었다면 서버 개방
   })
   .catch(err => {
     console.log(err)

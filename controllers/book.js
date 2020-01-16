@@ -1,16 +1,9 @@
 const Book = require('../models/book');
 const BookShelf = require('../models/book_shelf');
 
-
-// 네이버 검색 API
-const clientId = 'o4HY4geY37qR_mJopk_o';
-const clientSecret = '3zmjXCI44f';
-
-// 카카오 검색 API
-const kakaoAPIKey = 'c2b1e561719d5ebaa23081c3e8e48fee';
-
-// 패키지 IMPORT
-const rp = require('request-promise');
+// 외부 API 메서드
+const kakaoAPI = require('../external_apis/kakao');
+const naverAPI = require('../external_apis/naver');
 
 
 exports.getBooks = (req, res) => {
@@ -26,11 +19,10 @@ exports.getBooks = (req, res) => {
       through: {
         attributes: ['title', 'description'],
       },
-      
     }]
   })
-    .then(books => {
-      res.status(200).send(books);
+    .then(bookShelfWithBooks => {
+      res.status(200).send(bookShelfWithBooks[0].books);
     })
     .catch(err => {
       console.log(err);
@@ -39,54 +31,15 @@ exports.getBooks = (req, res) => {
 
 exports.searchBooks = (req, res) => {
 
-  // ----- 카카오 책 검색
-
-  const query = req.query.query;
-
-  const api_url = `https://dapi.kakao.com/v3/search/book?query=${encodeURI(query)}`
-
-  const options = {
-    uri: api_url,
-    headers: {
-      'Authorization': `KakaoAK ${kakaoAPIKey}`
-    }
-  }
-
-  rp(options)
+  kakaoAPI.searchBooks(req, res)
     .then(body => {
       res.status(200).send(body);
     })
     .catch(err => {
       console.log(err);
       res.status(500).end()
-    })
+    });
 
-
-
-  // ----- 네이버 책 검색
-
-  // const query = req.query.query;
-  // const display = req.query.display;
-  // const start = req.query.start;
-
-  // const api_url = `https://openapi.naver.com/v1/search/book.json?query=${encodeURI(query)}&display=${display}&start=${start}`;
-
-  // const options = {
-  //   uri: api_url,
-  //   headers: {
-  //     'X-Naver-Client-Id': clientId, 
-  //     'X-Naver-Client-Secret': clientSecret
-  //   }
-  // };
-
-  // rp(options)
-  //   .then(body => {
-  //     res.status(200).send(body);
-  //   })
-  //   .catch(err => {
-  //     console.log(err);
-  //     res.status(406).end();
-  //   });
 }
 
 
@@ -129,7 +82,7 @@ exports.updateBook = (req, res) => {
     .then(book => {
       book.title = updatingTitle;
       book.description = updatingDescription;
-      book.save()
+      return book.save();
     })
     .then(result => {
       res.status(200).send(result);
@@ -146,7 +99,7 @@ exports.deleteBook = (req, res) => {
 
   Book.findByPk(idx)
     .then(book => {
-      return book.destory();
+      return book.destroy();
     })
     .then(result => {
       res.status(200).send(result);

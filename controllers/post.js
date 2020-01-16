@@ -1,80 +1,98 @@
+const User = require('../models/user');
 const Post = require('../models/post');
+const Book = require('../models/book');
+
+const Op = require('sequelize');
 
 exports.getPosts = (req, res) => {
-
-  // 관계를 이용해서 포스트들 가져오기 -s 를 붙여야함.
-  req.user.getPosts()
-    .then(post => {
-      res.send(post);
+  Post.findAll()
+    .then(posts => {
+      res.status(200).send(posts);
     })
     .catch(err => {
       console.log(err);
-    }); 
-  
-  // 모든 포스트 가져오기
-  // Post.findAll().then(posts => {
-  //   res.send(posts);
-  // });
+      res.status(500).end();
+    });
 }
 
-exports.findPost = (req, res) => {
+exports.searchPosts = (req, res) => {
 
-  const title = req.body.title;
+  const userIdx = req.query.userIdx;
+  const bookIdx = req.query.userIdx;
 
-  // 특정 포스트만 가져오기
-  Post.findAll({where: {title: title}}).then(posts => {
-    res.send(posts);
-  });
+  if (userIdx || bookIdx) {
+    Post.findAll({
+      where: {
+        [Op.or]: [{userId: userIdx}, {bookId: bookIdx}]
+      }
+    })
+      .then(posts => {
+        res.status(200).send(posts);
+      })
+      .catch(err => {
+        console.log(err);
+        res.status(500).end();
+      })
+  } else {
+    res.status(400).end();
+  }
+  
 }
 
 exports.addPost = (req, res) => {
 
-  const title = req.body.title;
-  const imageURL = req.body.imageURL;
-  const text = req.body.text;
+  const userIdx = req.body.userIdx;
+  const bookIdx = req.body.bookIdx;
+  const addingTitle = req.body.title;
+  const addingImageUrl = req.body.imageUrl;
+  const addingText = req.body.text;
 
   // 관계형 모델에 따라, 포스트가 생성되면 자동으로 유저 객체를 이용해 포스트를 생성시킴으로써 데이터베이스 상에 해당 관계를 포함한 행을 추가함(1대 다 관계 구현)
-  req.user.createPost({
-    title: title,
-    imageURL: imageURL,
-    text: text,
-  }).then(result => {
-    console.log(result);
-    res.send('success!')
-  }).catch(err => {
-    console.log(err)
-  });
+  Post.create({
+    title: addingTitle,
+    imageUrl: addingImageUrl,
+    text: addingText,
+    userId: userIdx,
+    bookId: bookIdx
+  })
+    .then(result => {
+      res.status(200).send(result);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).end();
+    })
 
 }
 
 exports.updatePost = (req, res) => {
 
-  const id = req.body.id;
+  const idx = req.body.idx;
   const updatingTitle = req.body.title;
-  const updatingImageURL = req.body.imageURL;
+  const updatingImageUrl = req.body.imageUrl;
   const updatingText = req.body.text;
 
-  Post.findByPk(id)
+  Post.findByPk(idx)
     .then(post => {
       post.title = updatingTitle;
-      post.imageURL = updatingImageURL;
+      post.imageUrl = updatingImageUrl;
       post.text = updatingText;
       return post.save();
     })
     .then(result => {
-      console.log('POST UPDATED!');
-      res.send('POST UPDATED!');
+      res.status(200).send(result);
     })
     .catch(err => {
       console.log(err);
+      res.status(500).end();
     })
 }
 
 exports.deletePost = (req, res) => {
 
-  const id = req.body.id;
+  const idx = req.params.idx;
 
-  Post.findByPk(id)
+  Post.findByPk(idx)
     .then(post => {
       return post.destroy();
     })

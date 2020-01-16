@@ -6,7 +6,6 @@ const bookShelfController = require('../controllers/book_shelf');
 const libraryController = require('../controllers/library');
 const postController = require('../controllers/post');
 
-
 const router = express.Router();
 
 // ------------- USER
@@ -17,6 +16,12 @@ router.get('/users', userController.getUsers);
 // 특정 사용자의 정보를 찾아서 불러옵니다
 router.get('/user/:userIdx', userController.findUser);
 
+// 특정 사용자를 추가합니다
+
+// 특정 사용자의 정보를 업데이트 합니다
+
+// 특정 사용자의 정보를 삭제합니다(탈퇴)
+
 
 // ------------- Library
 
@@ -24,10 +29,10 @@ router.get('/user/:userIdx', userController.findUser);
 router.get('/library/:userIdx', libraryController.getLibrary);
 
 // 사용자의 도서관을 제정합니다
-router.post('/library/create', libraryController.createLibrary);
+router.post('/library', libraryController.createLibrary);
 
 // 사용자의 도서관의 정보를 업데이트 합니다
-router.put('/library/:idx', libraryController.updateLibrary
+router.put('/library', libraryController.updateLibrary
 );
 
 
@@ -40,13 +45,13 @@ router.get('/bookShelves/:libraryIdx', bookShelfController.getBookShelves);
 router.get('/bookShelves/search/options',bookShelfController.searchBookShelves);
 
 // 사용자의 도서관에 새로운 책장을 저장합니다
-router.post('/bookShelf/create', bookShelfController.createBookShelf);
+router.post('/bookShelf', bookShelfController.createBookShelf);
 
 // 사용자의 도서관에 있는 특정한 책장의 정보를 업데이트 합니다
-router.put('/bookShelf/update', bookShelfController.updateBookShelf);
+router.put('/bookShelf', bookShelfController.updateBookShelf);
 
 // 사용자의 도서관에 있는 특정한 책장을 지웁니다.
-router.delete('/bookShelf/delete/:idx', bookShelfController.deleteBookShelf);
+router.delete('/bookShelf/:idx', bookShelfController.deleteBookShelf);
 
 
 
@@ -59,13 +64,13 @@ router.get('/books/:bookShelfIdx', bookController.getBooks);
 router.get('/books/search/options', bookController.searchBooks);
 
 // 책을 새로 사용자의 도서관의 책장에 저장합니다
-router.post('/book/add', bookController.addBook);
+router.post('/book', bookController.addBook);
 
 // 사용자의 도서관의 책장에서 특정 책을 업데이트 합니다
-router.put('/book/update', bookController.updateBook);
+router.put('/book', bookController.updateBook);
 
 // 사용자의 도서관의 책장에서 특정 책을 삭제합니다
-router.delete('/book/delete', bookController.deleteBook);
+router.delete('/book/:idx', bookController.deleteBook);
 
 
 
@@ -77,11 +82,16 @@ router.delete('/book/delete', bookController.deleteBook);
 // 모든 글들을 가져옵니다
 router.get('/posts', postController.getPosts);
 
-// 특정 사용자의 글을 가져옵니다
-router.get('/posts/:idx', postController.findPost);
+// 특정 사용자가 특정 책에 대해 쓴 글들을 사용자 혹은 책을 바탕으로 검색해서 가져옵니다
+router.get('/posts/search', postController.searchPosts);
 
-// 특정 사용자의 글을 추가합니다. 
-router.post('/post/add', postController.addPost);
+// 특정 사용자의 특정 책에 대한 글을 추가합니다. 
+router.post('/post', postController.addPost);
 
+// 특정 사용자의 특정 책에 대한 글을 업데이트 합니다
+router.put('/post', postController.updatePost);
+
+// 특정 사용자의 특정 책에 대한 글을 삭제합니다
+router.delete('/post/:idx', postController.deletePost);
 
 module.exports = router;
